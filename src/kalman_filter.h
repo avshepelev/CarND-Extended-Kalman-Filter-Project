@@ -64,6 +64,7 @@ public:
    */
   void UpdateEKF(const Eigen::VectorXd &z);
 
+  const double PI = std::atan(1.0)*4; //AS; //AS
 };
 
 #endif /* KALMAN_FILTER_H_ */
