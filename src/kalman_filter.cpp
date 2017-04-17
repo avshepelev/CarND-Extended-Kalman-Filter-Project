@@ -42,10 +42,9 @@ void KalmanFilter::Update(const VectorXd &z) {
   VectorXd z_pred = H_ * x_;
 	VectorXd y = z - z_pred;
 	MatrixXd Ht = H_.transpose();
-	MatrixXd S = H_ * P_ * Ht + R_;
-	MatrixXd Si = S.inverse();
 	MatrixXd PHt = P_ * Ht;
-	MatrixXd K = PHt * Si;
+	MatrixXd S = H_ * PHt + R_;
+	MatrixXd K = PHt * S.inverse();
 
 	//new estimate
 	x_ = x_ + (K * y);
@@ -70,22 +69,24 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   float vx = x_[2];
   float vy = x_[3];
 
+  float epsilon = 0.001;
+  if (px < epsilon && py < epsilon) {
+    px = epsilon;
+    py = epsilon;
+  } else if (px < epsilon) {
+    px = epsilon;
+  }
+
   float rho = sqrt(pow(px, 2) + pow(py, 2));
-
   float phi = atan2(py, px);
-  if (fabs(px) < 0.001)
-    phi = atan2(py, 0.001); //phi = atan2(0.0001, 0.001);
-
-  float rho_dot = 0.0;
-  if (fabs(rho) > 0.001)
-    rho_dot = (px*vx + py*vy)/rho;
+  float rho_dot = (px*vx + py*vy)/rho;
 
   h << rho, phi, rho_dot;
 
-  cout << "px " << px << " py " << py << " rho " << rho << " phi " << phi << " rho_dot " << rho_dot << endl << endl;
+  //cout << "px " << px << " py " << py << " rho " << rho << " phi " << phi << " rho_dot " << rho_dot << endl << endl;
 
 	VectorXd y = z - h; // measurement - prediction in polar coordinates
-	cout << "y " << y << endl << endl;
+	//cout << "y " << y << endl << endl;
 
   // Adjust second element of y (bearing angle phi) until it is between -pi and pi
   while(y[1] < -PI)
@@ -94,10 +95,9 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     y[1] -= 2 * PI;
 
 	MatrixXd Hjt = Hj_.transpose();
-	MatrixXd S = Hj_ * P_ * Hjt + R_;
-	MatrixXd Si = S.inverse();
 	MatrixXd PHjt = P_ * Hjt;
-	MatrixXd K = PHjt * Si;
+	MatrixXd S = Hj_ * PHjt + R_;
+	MatrixXd K = PHjt * S.inverse();
 
 	//new estimate
 	x_ = x_ + (K * y);

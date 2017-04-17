@@ -52,24 +52,28 @@ FusionEKF::FusionEKF() {
  	//state covariance matrix P
 	MatrixXd P = MatrixXd(4, 4);
 	P << 1, 0, 0, 0,
-             0, 1, 0, 0,
-             0, 0, 1000, 0,
-             0, 0, 0, 1000;
+       0, 1, 0, 0,
+       0, 0, 1000, 0,
+       0, 0, 0, 1000;
 
   //the initial transition matrix F_
 	MatrixXd F = MatrixXd(4, 4);
 	F << 1, 0, 1, 0,
-             0, 1, 0, 1,
-             0, 0, 1, 0,
-             0, 0, 0, 1;
+       0, 1, 0, 1,
+       0, 0, 1, 0,
+       0, 0, 0, 1;
 
-             // measurement matrix
+  // measurement matrix
   MatrixXd H = MatrixXd(2, 4);
 	H << 1, 0, 0, 0,
-        0, 1, 0, 0;
+       0, 1, 0, 0;
 
   // process covariance matrix
   MatrixXd Q = MatrixXd(4, 4);
+  Q << 0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0;
 
   ekf_.Init(x, P, F, H, R_laser_, Q);
 
@@ -158,22 +162,24 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 	float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;	//dt - expressed in seconds
 	previous_timestamp_ = measurement_pack.timestamp_;
 
-	float dt_2 = dt * dt;
-	float dt_3 = dt_2 * dt;
-	float dt_4 = dt_3 * dt;
+	if ( dt > 0.001 ) {
+    float dt_2 = dt * dt;
+    float dt_3 = dt_2 * dt;
+    float dt_4 = dt_3 * dt;
 
-	//Modify the F matrix so that the time is integrated
-	ekf_.F_(0, 2) = dt;
-	ekf_.F_(1, 3) = dt;
+    //Modify the F matrix so that the time is integrated
+    ekf_.F_(0, 2) = dt;
+    ekf_.F_(1, 3) = dt;
 
-  // Use delta_t to compute new F and Q
-  ekf_.Q_ = MatrixXd(4, 4);
-	ekf_.Q_ <<  dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
-              0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
-              dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
-              0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
+    // Use delta_t to compute new F and Q
+    ekf_.Q_ = MatrixXd(4, 4);
+    ekf_.Q_ <<  dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
+                0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
+                dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
+                0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
 
-  ekf_.Predict();
+    ekf_.Predict();
+  }
 
   /*****************************************************************************
    *  Update
