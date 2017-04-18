@@ -61,7 +61,6 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
   Tools t;
 
-  MatrixXd Hj_ = t.CalculateJacobian(x_);
   VectorXd h(3);
 
   float px = x_[0];
@@ -76,6 +75,9 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   } else if (px < epsilon) {
     px = epsilon;
   }
+
+  //x_ << px, py, vx, vy;
+  MatrixXd Hj_ = t.CalculateJacobian(x_);
 
   float rho = sqrt(pow(px, 2) + pow(py, 2));
   float phi = atan2(py, px);

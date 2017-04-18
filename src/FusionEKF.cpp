@@ -124,13 +124,19 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
 
       //Reference below from main.cpp
-      float ro = measurement_pack.raw_measurements_(0); //Range
+      float rho = measurement_pack.raw_measurements_(0); //Range
       float phi = measurement_pack.raw_measurements_(1); //Bearing (relative heading)
+      float rho_dot = measurement_pack.raw_measurements_(2); //Range rate
 
-      float p_x = ro * cos(phi); //x coordinates along vehicle longitudinal axis
-      float p_y = ro * sin(phi);
+      float cos_phi = cos(phi);
+      float sin_phi = sin(phi);
 
-      ekf_.x_ << p_x, p_y, 0, 0;
+      float px = rho * cos_phi; //x coordinates along vehicle longitudinal axis
+      float py = rho * sin_phi;
+      float vx = rho_dot * cos_phi;
+      float vy = rho_dot * sin_phi;
+
+      ekf_.x_ << px, py, vx, vy;
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       /**
@@ -141,6 +147,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     }
 
     // done initializing, no need to predict or update
+    previous_timestamp_ = measurement_pack.timestamp_;
     is_initialized_ = true;
     return;
   }
