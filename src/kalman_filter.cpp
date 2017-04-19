@@ -63,20 +63,21 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
   VectorXd h(3);
 
+  if ((fabs(x_(0)) < 1e-3) && (fabs(x_(1)) < 1e-3)) {
+    x_(0) = 1e-3;
+    x_(1) = 1e-3;
+  }
+  else if (fabs(x_(0)) < 1e-3) {
+    x_(0) = 1e-3;
+  }
+
   float px = x_[0];
   float py = x_[1];
   float vx = x_[2];
   float vy = x_[3];
 
-  float epsilon = 0.001;
-  if (px < epsilon && py < epsilon) {
-    px = epsilon;
-    py = epsilon;
-  } else if (px < epsilon) {
-    px = epsilon;
-  }
-
   //x_ << px, py, vx, vy;
+
   MatrixXd Hj_ = t.CalculateJacobian(x_);
 
   float rho = sqrt(pow(px, 2) + pow(py, 2));
